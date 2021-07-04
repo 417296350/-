@@ -2,10 +2,6 @@
 # -*- coding: utf-8 -*-
 import os, sys
 
-'''---------------------------------------- Note ----------------------------------------'''
-# note：组件化开发中一键更新脚本
-# author：程旭东
-
 '''---------------------------------------- 使用方法 ----------------------------------------'''
 # 方法一：file.py方式，因为每次执行更新都需要命令行去执行 (不推荐)
     # 1.文件导入：把当前文件导入到要一键更新的模块中，保证[当前文件]和[模块.podsepc文件]在同一个根路径下
@@ -14,25 +10,28 @@ import os, sys
 # 方法二：file.command方式推荐，每次执行只需要双击即可 (推荐)
     # 1.把当前文件导入到要一键更新的模块中，保证[当前文件]和[模块.podsepc文件]在同一个根路径下
     # 2.变量配置：配置pod_repo_name、pod_repo_url、pod_spec_file 
-    #           要在当前文件最顶部导入<#!/usr/bin/env python3>命令  {当前文件中已引入}
-    #           再导入os.chdir(os.path.abspath(os.path.dirname(sys.argv[0])))  {当前文件中已引入}
+    #           要在当前文件最顶部导入<#!/usr/bin/env python3>命令
+    #           再导入os.chdir(os.path.abspath(os.path.dirname(sys.argv[0])))
     #           把文件后缀修改为command
     #           打开终端，执行chmod +x file.command，注意只需执行一次即可，后续不需要再处理。
     # 3.执行：双击文件即可
 
 '''--------------------------------------- 需配置的参数 --------------------------------------'''
-# 远程私有库的名称
-pod_repo_name =  '远程私有库名称'
-# 远程私有库的地址
-pod_repo_url = '远程私有库地址'
-# podsepc文件名称
-pod_spec_file = '要cocopods的podspec文件名称'
+# 远程私有索引库的名称[这个变量才是真正决定要把当前podspec文件上传到哪个远端索引库的决定性参数]
+pod_repo_name =  '私有索引库的名称'
+# 远程私有库的地址[这个地址虽然是私有索引库的地址，但不决定上传问题，仅仅用于校当前podspec文件中的依赖库能否找到而已]
+pod_repo_url = '远端私有库的地址'
+# podspec文件名称
+pod_spec_file = '要上传的podspec文件名称'
 
 
 '''----------------------------------------- 开始 ------------------------------------------'''
 # ------- 定义全局常量 --------#
+# tag版本
 tag_version = ''
-pod_repo_source = ''
+# 远端公共索引库地址[同样不决定上传问题，仅仅用于校当前podspec文件中的依赖库能否找到而已]
+pod_public_repo_url = 'http://192.168.76.214:9091/ios/demo_zjh/podrepo.git'
+# podspec相对路径
 pod_spec_file_path = './' + pod_spec_file
 
 # ------ def update methods -------#
@@ -56,7 +55,6 @@ def get_pod_version():
         if find_pod_key(line,".source"):
             start_idx = line.find('"') + 1
             end_idx = line.rfind('"')
-            pod_repo_source = line[start_idx:end_idx]
     file.close()
 
 def pod_lint():
@@ -70,12 +68,12 @@ def pod_lint():
     if len(pod_repo_url) == 0:
         log_error('Error:未在当前脚本文件中设置远程私有库地址，去设置pod_repo_url');
         os.sys.exit()
-    commad = 'pod spec lint' + ' ' + pod_spec_file + ' ' + '--sources=' + pod_repo_url + ' ' + '--verbose --allow-warnings'
+    commad = 'pod spec lint' + ' ' + pod_spec_file + ' ' + '--sources=' + pod_repo_url + ',' + pod_public_repo_url + ' ' + '--verbose --allow-warnings'
     os.system(commad)
 
 def pod_push():
     log_waiting('④:上传当前' + pod_spec_file + '文件至{0}私有库'.format(pod_repo_name))
-    commad = 'pod repo push' + ' ' + pod_repo_name + ' ' + pod_spec_file + ' ' + '--sources=' + pod_repo_url + ' ' + '--allow-warnings'
+    commad = 'pod repo push' + ' ' + pod_repo_name + ' ' + pod_spec_file + ' ' + '--sources=' + pod_repo_url + ',' + pod_public_repo_url + ' ' + '--allow-warnings'
     os.system(commad)
 
 def pod_deal():
